@@ -1,0 +1,41 @@
+{
+  "name": "fun-widget-app---small-project-to-become-software-engineer",
+  "version": "1.0.0",
+  "description": "Polyglot system telemetry and productivity widget dashboard",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron main.js",
+    "build": "electron-builder --win --dir"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.polyglot.systemwidget",
+    "productName": "SystemTelemetryWidget",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "portable"
+    },
+    "files": [
+      "main.js",
+      "server.js",
+      "public/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      "telemetry_worker.exe",
+      "app_tracker.py"
+    ]
+  }
+}

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { 
+            background: rgba(15, 23, 42, 0.85); /* Dark glassmorphism base */
+            backdrop-filter: blur(12px);
+            color: #f8fafc; 
+            padding: 10px 14px; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            -webkit-app-region: drag; 
+            cursor: grab;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        /* Transparent Watermark Background Overlay for Widget */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('background.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.05; /* Subtle transparency for the small floating card */
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .widget-title { font-size: 0.7rem; color: #38bdf8; font-weight: 600; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
+        .metric-line { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 500; margin: 2px 0; }
+        .metric-value { color: #34d399; font-weight: 700; }
+        .gpu-section { border-top: 1px dashed rgba(255,255,255,0.1); margin-top: 4px; padding-top: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="widget-title">
+        <span>Hardware HUD</span>
+        <span style="font-size: 0.6rem; color: #94a3b8;">(Drag)</span>
+    </div>
+    
+    <!-- CPU Row -->
+    <div class="metric-line">
+        <span>CPU:</span>
+        <span class="metric-value" id="w-cpu">--%</span>
+    </div>
+
+    <!-- Dynamic Dual GPU Container -->
+    <div id="gpu-container">
+        <div class="metric-line">
+            <span>GPU:</span>
+            <span class="metric-value">Scanning...</span>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        async function fetchWidgetData() {
+            try {
+                const res = await fetch('http://localhost:3000/api/metrics');
+                const data = await res.json();
+                
+                // Update CPU
+                const cpuVal = data.cpu ? data.cpu.toFixed(1) + '%' : '0%';
+                document.getElementById('w-cpu').innerText = cpuVal;
+
+                // Render Dual GPUs dynamically
+                let gpuHtml = '';
+                if (data.gpus && data.gpus.length > 0) {
+                    data.gpus.forEach((gpu, index) => {
+                        // Shorten names to fit the compact widget cleanly
+                        let shortName = gpu.name
+                            .replace('NVIDIA GeForce ', '')
+                            .replace('Intel(R) UHD Graphics ', 'Intel UHD ')
+                            .replace('Graphics', 'UHD');
+
+                        // Fallership for property names coming from your C++ worker (util vs load, vramUtil vs vram)
+                        let load = (gpu.util !== undefined ? gpu.util : gpu.load || 0).toFixed(1);
+                        let vram = (gpu.vramUtil !== undefined ? gpu.vramUtil : gpu.vram || 0).toFixed(1);
+
+                        gpuHtml += `
+                            <div class="metric-line gpu-section">
+                                <span style="font-size: 0.75rem; color: #94a3b8;" title="${gpu.name}">${shortName}:</span>
+                                <span class="metric-value">${load}% <span style="font-size: 0.7rem; color: #38bdf8;">(V: ${vram}%)</span></span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    gpuHtml = `<div class="metric-line gpu-section"><span>GPU:</span> <span class="metric-value">N/A</span></div>`;
+                }
+
+                document.getElementById('gpu-container').innerHTML = gpuHtml;
+
+                // Send primary GPU stats back to Electron for tray tooltip
+                const primaryGpuLoad = data.gpus && data.gpus[0] ? (data.gpus[0].util || data.gpus[0].load || 0) : 0;
+                ipcRenderer.send('update-tray-stats', { 
+                    cpu: data.cpu ? data.cpu.toFixed(0) : 0, 
+                    gpu: primaryGpuLoad.toFixed(0) 
+                });
+            } catch (e) {
+                console.error("Widget fetch error:", e);
+            }
+        }
+
+        setInterval(fetchWidgetData, 1500);
+        fetchWidgetData();
+    </script>
+</body>
+</html>

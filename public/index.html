@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polyglot System Utility Dashboard</title>
+    <!-- Google Fonts for modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        
+        body { 
+            background-color: #0f172a; 
+            color: #f8fafc; 
+            padding: 2rem; 
+            min-height: 100vh; 
+            position: relative;
+        }
+
+        /* Transparent Watermark Background Overlay */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('background.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.07; /* Adjust between 0.03 and 0.15 for transparency level */
+            pointer-events: none; /* Allows mouse clicks to pass straight through */
+            z-index: -1; /* Keeps it behind all dashboard cards */
+        }
+
+        header { margin-bottom: 2rem; text-align: center; }
+        header h1 { font-size: 2rem; font-weight: 700; color: #38bdf8; }
+        header p { color: #94a3b8; font-size: 0.95rem; margin-top: 0.3rem; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: #1e293b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 1rem; color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 0.5rem; }
+
+        /* Metrics styling */
+        .metric-row { margin-bottom: 1rem; }
+        .metric-label { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.3rem; }
+        .progress-bar { width: 100%; height: 8px; background-color: #334155; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background-color: #3b82f6; width: 0%; transition: width 0.5s ease; }
+
+        /* App list styling */
+        ul { list-style: none; }
+        ul li { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #334155; font-size: 0.9rem; }
+        ul li:last-child { border-bottom: none; }
+
+        /* Quote & Fact Styling */
+        .quote-box p { font-style: italic; margin-bottom: 0.5rem; font-size: 0.95rem; }
+        .quote-box span { font-size: 0.85rem; color: #94a3b8; display: block; text-align: right; }
+        button { background-color: #38bdf8; color: #0f172a; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 1rem; transition: background 0.2s; }
+        button:hover { background-color: #0ea5e9; }
+
+        /* Hydration Timer */
+        .timer-display { font-size: 2rem; font-weight: 700; text-align: center; margin: 1rem 0; color: #34d399; }
+    </style>
+</head>
+<body>
+
+
+    <header>
+        <h1>System Telemetry & Productivity Dashboard</h1>
+        <p>Polyglot Architecture: C++ &bull; Python &bull; Node.js &bull; HTML</p>
+    </header>
+
+    <div class="dashboard-grid">
+        <!-- Hardware Telemetry Card -->
+        <div class="card">
+            <h2>Hardware Telemetry (C++ Backend)</h2>
+            <div id="telemetry-container">
+                <!-- CPU Metric Row -->
+                <div class="metric-row">
+                    <div class="metric-label"><span id="cpu-name">CPU Usage</span><span id="cpu-val">0%</span></div>
+                    <div class="progress-bar"><div id="cpu-bar" class="progress-fill" style="width: 0%"></div></div>
+                </div>
+                
+                <!-- Dynamic Dual GPUs Container -->
+                <div id="gpu-container">
+                    <div class="metric-row" style="margin-top: 0.8rem;">
+                        <div class="metric-label">
+                            <span style="color: #94a3b8;">Scanning GPUs...</span>
+                            <span>Load: 0.0% | VRAM: 0.0%</span>
+                        </div>
+                        <div class="progress-bar"><div class="progress-fill" style="width: 0%; background-color: #10b981;"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- App Usage Card -->
+        <div class="card">
+            <h2>Top Active Apps (Python Backend)</h2>
+            <ul id="app-list">
+                <li><span>Scanning active processes...</span><span>--</span></li>
+            </ul>
+        </div>
+
+        <!-- Quote & Fact Card -->
+        <div class="card">
+            <h2>Inspiration & Fun Fact</h2>
+            <div class="quote-box" id="quote-container">
+                <p id="quote-text">Loading quote...</p>
+                <span id="quote-author"></span>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #334155; margin: 1rem 0;">
+            <p id="fact-text" style="font-size: 0.9rem; color: #cbd5e1;">Loading fun fact...</p>
+            <button onclick="fetchFreshData()">Refresh Insights</button>
+        </div>
+
+        <!-- Hydration Timer Card -->
+        <div class="card">
+            <h2>Hydration Reminder</h2>
+            <p style="font-size: 0.9rem; color: #94a3b8;">Keep yourself hydrated while coding!</p>
+            <div class="timer-display" id="timer-display">20:00</div>
+            <button onclick="resetTimer()" style="width: 100%;">Reset Timer</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. FETCH HARDWARE METRICS (Every 1 second) ---
+        async function updateTelemetry() {
+            try {
+                const res = await fetch('/api/metrics');
+                const data = await res.json();
+
+                // Update CPU Name & Usage
+                if (data.cpuName) {
+                    document.getElementById('cpu-name').innerText = data.cpuName.substring(0, 30) + '...';
+                }
+                document.getElementById('cpu-val').innerText = `${data.cpu.toFixed(1)}%`;
+                document.getElementById('cpu-bar').style.width = `${data.cpu}%`;
+
+                // Update Active GPUs dynamically with both Engine Load & VRAM
+                const gpuContainer = document.getElementById('gpu-container');
+                gpuContainer.innerHTML = '';
+                if (data.gpus && data.gpus.length > 0) {
+                    data.gpus.forEach((gpu) => {
+                        gpuContainer.innerHTML += `
+                            <div class="metric-row" style="margin-top: 0.8rem;">
+                                <div class="metric-label">
+                                    <span title="${gpu.name}">${gpu.name.substring(0, 24)}...</span>
+                                    <span>Load: ${gpu.util.toFixed(1)}% | VRAM: ${gpu.vramUtil.toFixed(1)}%</span>
+                                </div>
+                                <div class="progress-bar"><div class="progress-fill" style="width: ${gpu.util}%; background-color: #10b981;"></div></div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (e) {}
+        }
+
+        // --- 2. FETCH TOP APPS (Every 3 seconds) ---
+        async function updateApps() {
+            try {
+                const res = await fetch('/api/apps');
+                const apps = await res.json();
+                const listEl = document.getElementById('app-list');
+                listEl.innerHTML = '';
+
+                const entries = Object.entries(apps);
+                if (entries.length === 0) {
+                    listEl.innerHTML = '<li><span>Waiting for python telemetry...</span><span>0s</span></li>';
+                    return;
+                }
+
+                entries.forEach(([name, seconds]) => {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+                    listEl.innerHTML += `<li><span>${name}</span><strong>${timeStr}</strong></li>`;
+                });
+            } catch (e) {}
+        }
+
+        // --- 3. FETCH QUOTE & FACT INDEPENDENTLY ---
+        async function fetchFreshData() {
+            // Fetch Quote
+            try {
+                const qRes = await fetch('/api/quote');
+                const qData = await qRes.json();
+                document.getElementById('quote-text').innerText = `"${qData.quote}"`;
+                document.getElementById('quote-author').innerText = `- ${qData.author}`;
+            } catch (e) {
+                console.error("Quote fetch error:", e);
+            }
+
+            // Fetch Fact
+            try {
+                const fRes = await fetch('/api/fact');
+                const fData = await fRes.json();
+                document.getElementById('fact-text').innerText = fData.fact || "Python is named after the comedy troupe Monty Python!";
+            } catch (e) {
+                console.error("Fact fetch error:", e);
+                document.getElementById('fact-text').innerText = "The first computer bug was an actual real moth found inside a relay in 1947.";
+            }
+        }
+
+        // --- 4. HYDRATION TIMER LOGIC ---
+        let timeLeft = 20 * 60; // 20 minutes in seconds
+        function updateTimer() {
+            const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const secs = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${mins}:${secs}`;
+
+            if (timeLeft > 0) {
+                timeLeft--;
+            } else {
+                alert("💧 Time to drink some water and stretch your legs!");
+                timeLeft = 20 * 60; // Reset
+            }
+        }
+        function resetTimer() {
+            timeLeft = 20 * 60;
+        }
+
+        // Initialize Loops
+        setInterval(updateTelemetry, 1000);
+        setInterval(updateApps, 3000);
+        setInterval(updateTimer, 1000);
+        fetchFreshData(); // Initial load
+    </script>
+</body>
+</html>
